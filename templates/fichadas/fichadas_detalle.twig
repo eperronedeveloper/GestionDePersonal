@@ -1,0 +1,466 @@
+{% extends "embeds/extends/modal.twig" %}
+{% block style %}
+    <style>
+        #btnAgregarFichada{
+            font-size: 19px;
+            background-color: #61ace9 !important;
+            border: transparent !important;
+            float: right;
+        }
+        .containerAgregar{
+            display: flex;
+            align-items: center;
+        }
+        .flatpickr-input[readonly] {
+            cursor: pointer;
+            background-color: #fff !important;
+        }
+
+        .boxes{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 1px 2px 6px 0px rgb(0 0 0 / 30%);
+            border-radius: 10px;
+        }
+
+
+        .cardfichadas{
+            z-index: 10;
+            display: block;
+            width: 100%;
+            height: 495px;
+            overflow-y: scroll;
+            align-content: center;
+            padding-top: 10px;
+        }
+
+        .cardfichadas::-webkit-scrollbar {
+          width: 5px;     /* Tamaño del scroll en vertical */
+          height: 5px;    /* Tamaño del scroll en horizontal */
+        }
+
+        .cardTipoTabla {
+            display: grid;
+            grid-gap: 0;
+            background: #fff;
+            /*box-shadow: 0px 0px 8px 0px rgb(0 0 0 / 30%);*/
+            align-items: center;
+            padding-top: 15px;
+            margin: auto;
+            width: 97%;
+            text-align: center;
+            margin-bottom: 5px;
+            /*border-radius: 10px;*/
+        }
+        .cardTipoTabla > .detallefichada {
+            display: contents;
+            text-align: center;
+            margin: 45px;
+            text-transform: uppercase;
+        }
+
+        .cardTipoTabla > p {
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .cardTitulos {
+            display: grid;
+            grid-gap: 0;
+            background: #fff;
+            padding: 0px 25px 0px 25px;
+            margin-bottom: 8px;
+            width: 100%;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+            background-color: #c7c7c74f;
+            border-radius: 5px;
+        }
+
+        .cardTitulos > p{
+            margin: 0 !important;
+            padding: 7px;
+        }
+
+        .grid-columns-4 {
+            grid-template-columns: repeat(4, 1fr) !important;
+        }
+        .grid-columns-5 {
+            grid-template-columns: repeat(5, 1fr) !important;
+        }
+        .grid-columns-6 {
+            grid-template-columns: repeat(6, 1fr) !important;
+        }
+
+        select > option{
+                font-size: 1.25rem;
+        }
+    </style>
+{% endblock %}
+{% block script %}
+    <script>
+    FADU.modal = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+    vista.fichada = {{fichada ? (fichada | json_encode | raw) : '[]' }};
+    
+    vista.DOM = {
+        legajo: document.querySelector("#legajo"),
+        fecha_fichada: document.querySelector("#fecha_fichada"),
+        hora_fichada: document.querySelector("#hora_fichada"),
+        tipo_fichada: document.querySelector("#tipo_fichada"),
+        btnAgregarFichada: document.querySelector("#btnAgregarFichada"),
+        divFichadas: document.querySelector("#divFichadas"),
+        guardar: document.querySelector('#guardar'),
+        eliminar: document.querySelector('#eliminar'),
+        form: document.querySelector("#formFichadas")
+    };
+    
+   {% if fichada != null %}
+        {% if tienePermiso('PERSONAL_FICHADAS.ELIMINAR') %}
+            vista.DOM.eliminar.addEventListener('click', (event) => {
+                vista.FUNCION.eliminar(vista.fichada.legajo);
+            });
+        {% endif %}
+    {% endif %}
+
+    vista.FUNCION.dibujarFichada = () => {        
+            vista.DOM.divFichadas.innerHTML = ``;
+            let html = `
+                <div class="cardTitulos grid-columns-5">
+                    <p>LEGAJO</p>
+                    <p>FECHA</p>
+                    <p>HORA</p>
+                    <p>TIPO</p>
+                    <p>ACCIONES</p>
+                </div>
+                <div class="boxes">
+                    <div class="container-cards cardfichadas">
+                            <div class="cardTipoTabla grid-columns-5">`;
+                        vista.fichada.forEach((item, i) => {
+                            let color;
+                            (item.tipo_fichada == 'SALIDA') ? color = 'style="color:red"' : color = 'style="color:green"';
+                            html += `
+                            <div id="fichada-${item.legajo}-${item.fecha_fichada.replace(/\//g, '-')}-${item.tipo_fichada}" class="detallefichada">
+                                <p ${color}>${item.legajo} - ${item.nombre_agente}, ${item.apellido_agente}</p>
+                                <p ${color}>${item.fecha_fichada}</p>
+                                <p ${color}>${item.hora_fichada}</p>
+                                <p ${color}>${item.tipo_fichada}</p>
+                                <p>
+                                    <i onclick="FADU.modal.FUNCION.eliminarFichada(${item.legajo},'${item.fecha_fichada.replace(/\//g, '-')}','${item.tipo_fichada}', 'fichada-${item.legajo}-${item.fecha_fichada.replace(/\//g, '-')}-${item.tipo_fichada}')" class="cestoEliminar fa fa-trash-o fa-lg"></i>
+                                </p>
+                            </div>`;
+                        });
+                            `</div>
+                    </div>
+                </div>`;
+                vista.DOM.divFichadas.innerHTML = html;
+                vista.DOM.legajo.value = '';
+                vista.DOM.fecha_fichada.value = '';
+                vista.DOM.hora_fichada.value = '';
+                vista.DOM.tipo_fichada.value = '';
+                vista.legajo = null;
+                vista.nombre_agente = null;
+                vista.apellido_agente = null;
+        };
+
+
+    if(localStorage.getItem("fichadas") != null){        
+        let storedFichadas = localStorage.getItem("fichadas");
+        let fichadas = JSON.parse(storedFichadas);        
+        if(fichadas.length >= 0){
+            for(let i = 0; i < fichadas.length; i++){
+                vista.fichada.push(fichadas[i]);
+            }
+        }
+        if(vista.fichada.length > 0){
+            vista.FUNCION.dibujarFichada(vista.fichada);    
+        }
+    }
+
+
+
+    vista.FUNCION.agregarFichada = () => {
+        return new Promise((resolve, reject) => {
+            let datos = {
+                legajo: vista.legajo,
+                nombre_agente: vista.nombre_agente,
+                apellido_agente: vista.apellido_agente,
+                fecha_fichada: vista.DOM.fecha_fichada.value,
+                hora_fichada: vista.DOM.hora_fichada.value,
+                tipo_fichada: vista.DOM.tipo_fichada.value
+            };     
+            
+            let fichada = Object.values(datos);
+                for(let i = 0; i < fichada.length; i++){
+                    if(fichada[i] == '' || fichada[i] == null){
+                        return swal({icon: 'error', text: 'DEBE COMPLETAR TODOS LOS CAMPOS'});
+                    }
+                }
+            
+            let legajoExistente = vista.fichada.find(elemento => elemento.legajo == datos.legajo);
+            let fichadaExistente = vista.fichada.find(elemento => elemento.fecha_fichada == datos.fecha_fichada);
+            let tipoFichadaExistente = vista.fichada.find(elemento => elemento.tipo_fichada == datos.tipo_fichada);
+            
+                if (fichadaExistente && fichadaExistente && tipoFichadaExistente) {
+                    return swal({icon: 'error', text: 'TIPO DE FICHADA PARA AGENTE YA INGRESADA'});
+                }else{
+                    
+                    for(let i = 0; i < vista.fichada.length; i++){
+                        if((datos.legajo == vista.fichada[i].legajo && datos.fecha_fichada == vista.fichada[i].fecha_fichada)
+                            && (datos.tipo_fichada == 'SALIDA' && datos.hora_fichada < vista.fichada[i].hora_fichada)){
+                                return swal({icon: 'error', text: 'LA FICHADA DE SALIDA NO PUEDE SER ANTERIOR A LA DE ENTRADA.'});
+                        }
+                        if((datos.legajo == vista.fichada[i].legajo && datos.fecha_fichada == vista.fichada[i].fecha_fichada)
+                            && (datos.tipo_fichada == 'ENTRADA' && datos.hora_fichada > vista.fichada[i].hora_fichada)){
+                                return swal({icon: 'error', text: 'LA FICHADA DE ENTRADA NO PUEDE SER POSTERIOR A LA DE SALIDA.'});
+                        }
+                    }
+
+                    var oldItems = localStorage.getItem('fichadas', JSON.stringify(vista.fichada));
+                    var arrItems = [];
+                    if(oldItems){
+                        let oldItem = JSON.parse(oldItems);
+                        oldItem.push(datos);
+                        localStorage.setItem('fichadas', JSON.stringify(oldItem))
+                    }else{
+                        arrItems.push(datos);
+                        localStorage.setItem('fichadas', JSON.stringify(arrItems))
+                    }
+                    
+                    vista.fichada.push(datos);
+                    vista.FUNCION.dibujarFichada();
+                }
+            resolve();
+        })
+    }
+
+    vista.DOM.btnAgregarFichada.addEventListener('click', () => {
+        try {
+            vista.FUNCION.agregarFichada();
+        } catch (err) {
+            console.log(err);
+        }
+        
+    });
+
+    {% if tienePermiso('PERSONAL_FICHADAS.GUARDAR') %}
+        vista.FUNCION.guardar = (event) => {
+            event.preventDefault();
+
+            if(vista.fichada.length == 0){
+                return swal({icon:'error', text: 'DEBE GUARDAR AL MENOS UNA FICHADA'});
+            }
+            vista.DOM.guardar.disabled = true;
+            
+            let url = `{{baseUrl}}/api/fichadas/crear`;
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    dataType: 'json',
+                    data: {
+                        datos: vista.fichada
+                    },
+                    success: json => { swal({ icon: 'success', text: json.mensaje })
+                        .then( () => { 
+                            localStorage.removeItem('fichadas');
+                            recargarTabla(tablaFichadas);
+                            cerrarModal();
+                        })
+                    },
+                    error: json => { swal({icon: 'error', text: 'YA EXISTE FICHADA PARA LEGAJO: ' + json.responseJSON.error.legajo + ', FECHA: ' + json.responseJSON.error.fecha_fichada_f + ', TIPO: ' + json.responseJSON.error.tipo_fichada})
+                        vista.DOM.guardar.disabled = false;
+                    },
+                });
+            };
+    {% endif %}
+
+    {% if tienePermiso('PERSONAL_FICHADAS.ELIMINAR') %}
+    vista.FUNCION.eliminarFichada = (legajo, fecha_fichada, tipo_fichada, element_id) => {
+        let storedFichadas = JSON.parse(localStorage.getItem("fichadas")) || [];
+        let fecha = fecha_fichada.replace(/\-/g, '/')
+            swal({
+                icon: "warning",
+                text: `¿ESTA SEGURO QUE DESEA REMOVER LA FICHADA DEL AGENTE NÚMERO ${legajo}?`,
+                buttons: ['CANCELAR', 'SI, REMOVER'],
+                dangerMode: true,
+            }).then((ok) => {
+                if(ok){
+                    let divFichada = document.querySelector(`#${element_id}`);
+
+                    if(storedFichadas.length > 0){
+                        let itemsStored = vista.fichada.find((fichada, index) => {                 
+                            return fichada.legajo == legajo && fichada.fecha_fichada == fecha && fichada.tipo_fichada == tipo_fichada;
+                        });
+
+                        if(itemsStored){
+                            let index = vista.fichada.indexOf(itemsStored);
+                            storedFichadas.splice(itemsStored.index, 1);
+                        }
+                    };
+
+                    let fichadaEncontrada = vista.fichada.find((fichada, index) => {                        
+                        return fichada.legajo == legajo && fichada.fecha_fichada == fecha && fichada.tipo_fichada == tipo_fichada;
+                    });
+
+                    if (fichadaEncontrada) {
+                        let index = vista.fichada.indexOf(fichadaEncontrada);
+                        vista.fichada.splice(index, 1);
+                    }
+
+                    localStorage.setItem('fichadas', JSON.stringify(storedFichadas));
+                    divFichada.remove();
+
+                    if(vista.fichada.length == 0){
+                        vista.DOM.divFichadas.innerHTML = ``;
+                    }
+                };
+            });
+    }
+    {% endif %}
+
+
+    $(vista.DOM.legajo).autocomplete({
+                    autoFocus: true,
+                    minLength: 1,
+            source: function (request, response) {
+                vista.legajo = null;
+                $.post({
+                    url: "{{baseUrl}}" + "/fichadas/ACLegajo",
+                    dataType: "json",
+                    data: {
+                        descripcion: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    },
+                });
+            },
+            select: function (event, ui) {
+                if (!ui.item.id) {
+                    $(this).val('');
+                    return false;
+                }
+                vista.legajo = ui.item.id;
+                vista.nombre_agente = ui.item.nombre_agente;
+                vista.apellido_agente = ui.item.apellido_agente;
+            }
+    }).autocomplete("instance")._renderItem = function (ul, item) {
+        if (item.id) {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px;'>"  + item.value +  
+                            "<br> <span style='font-size:11px;font-weight:bold;color:#AAA;'> FADU UBA - PABELLON III</span> </div>")
+                    .appendTo(ul);
+        } else {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px'>NO HAY RESULTADOS PARA LA BÚSQUEDA</div>")
+                    .appendTo(ul);
+        }
+    };
+
+    flatpickr(vista.DOM.fecha_fichada, {
+        dateFormat: "d/m/Y",
+        altFormat: "d/m/Y",
+        locale: {
+          firstDayOfWeek: 1,
+          weekdays: {
+            shorthand: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+            longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],         
+          }, 
+          months: {
+            shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Оct', 'Nov', 'Dic'],
+            longhand: ['Enero', 'Febreo', 'Мarzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+          },
+        }
+    });
+
+    flatpickr(vista.DOM.hora_fichada, {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        allowInput: true,
+        time_24hr: true,
+        locale: {
+          firstDayOfWeek: 1,
+          weekdays: {
+            shorthand: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+            longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],         
+          }, 
+          months: {
+            shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Оct', 'Nov', 'Dic'],
+            longhand: ['Enero', 'Febreo', 'Мarzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+          },
+        },
+        onReady: function(dateObj, dateStr, instance) {
+          var input = instance._input;
+          input.addEventListener('input', function(e) {
+            var value = e.target.value.replace(/\D/g, ''); // Remueve todos los caracteres que no sean dígitos
+            if (value.length > 2) {
+              value = value.slice(0, 2) + ':' + value.slice(2); // Añade ":" después de los primeros dos dígitos
+            }
+            if (value.length > 5) {
+              value = value.slice(0, 5); // Limita la longitud total a 5 caracteres
+            }
+            e.target.value = value;
+          });
+        }
+    });
+
+    }
+
+    </script>
+{% endblock %}
+{% block modalBody %}    
+    <form id="formFichadas" onsubmit="FADU.modal.FUNCION.guardar(event)">        
+        <div class="row g-3">
+            <div class="col-sm-3 col-md-6 col-xl-3 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="legajo" id="legajo" placeholder="Legajo"  value="" autocomplete="off">
+                <label for="legajo" class="input-label">LEGAJO</label>
+            </div>        
+            <div class="col-sm-3 col-md-6 col-xl-3 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="fecha_fichada" id="fecha_fichada" placeholder="Fecha Fichada"  value="{{fichada.fecha_fichada}}" autocomplete="off">
+                <label for="fecha_fichada" class="input-label">FECHA</label>
+            </div>
+            <div class="col-sm-3 col-md-6 col-xl-3 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="hora_fichada" id="hora_fichada" placeholder="Hora Fichada"  value="{{fichada.hora_fichada}}" autocomplete="off">
+                <label for="hora_fichada" class="input-label">HORA</label>
+            </div>
+            <div class="containerAgregar col-sm-3 col-md-6 col-xl-3 form-floating mb-4">
+                <select class="form-control text-uppercase" id="tipo_fichada" name="tipo_fichada" placeholder="Tipo Fichada">
+                    {% if fichada == null %}
+                        <option hidden selected value="">Seleccionar</option>
+                    {% else %}
+                        <option selected hidden value="{{fichada.tipo_fichada}}" class="input-control">{{fichada.tipo_fichada}}</option>
+                    {% endif %}
+                        <option value="ENTRADA">ENTRADA</option>
+                        <option value="SALIDA">SALIDA</option>
+                </select>
+                <label for="tipo_fichada" class="input-label">TIPO FICHADA</label>
+                <div id="btnAgregarFichada" class="btn btn-primary"><i class="bi bi-plus-lg"></i></div>
+            </div>
+
+        </div>  
+    </form>
+    {# <div class="row g-3"> #}
+        {# <div id="agregarFichada" class="col form-floating mb-4 agregarFichada"> #}
+            {# <button id="btnAgregarFichada" class="btn btn-primary">Agregar</button> #}
+        {# </div> #}
+    {# </div> #}
+    <div id="divFichadas"></div>   
+{% endblock %}
+{% block modalFooter %}
+    <div class="button-container">
+    {% if tienePermiso('PERSONAL_FICHADAS.GUARDAR') %}
+        <button id="guardar" type="submit" form="formFichadas" class="btn-guardar">GUARDAR</button>
+    {% endif %}
+
+        {% if fichada != null %}
+            {% if tienePermiso('PERSONAL_FICHADAS.ELIMINAR') %}
+                <button id="eliminar" class="btn-eliminar">ELIMINAR</button>
+            {% endif %}   
+        {% endif %}   
+    </div>
+{% endblock %}

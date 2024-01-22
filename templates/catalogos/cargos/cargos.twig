@@ -1,0 +1,179 @@
+{% extends "embeds/extends/base.twig" %}
+{% block title %}{{title}}{% endblock %}
+{% block style %} 
+<style>
+    .text-uppercase{
+        text-transform: uppercase;
+    }
+    #crearCargo{
+        text-align: right;
+    }
+
+    
+    .rowsTable{
+        display: inline;
+        text-align: center;
+    }
+    
+    .iconos {
+        display: flex;
+        float: right; 
+        align-items: center;
+        margin-right: 10px;   
+    }
+    
+    .iconos > img:hover {
+        cursor: pointer;
+        transition: background-color 0.5s ease;
+    }
+    
+    .btn-agregar {
+        display: inline-flex;
+        width: 100px;
+        height: 35px;
+        padding: 0.6em 0.88em;
+        background: linear-gradient(to right, green 50%, #fff 50%);
+        background-size: 200% 105.5%;
+        background-position: right bottom;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: bold;
+        color: #020202;
+        border: none;
+        border-left: 6px solid green;
+        border-color: none;
+        box-shadow: 3px 3px 2px rgb(0 0 0 / 8%);
+        transition: all .4s ease-out;
+        border-radius: 6px;
+        justify-content: center;
+    }
+
+    .btn-agregar:hover {
+      background-position: left bottom;
+      color: white;
+    }
+
+</style>
+{% endblock %} 
+
+{% block script %}
+
+    <script>
+        FADU = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+            vista.DOM = {
+                crearCargo: document.querySelector("#crearCargo"),
+            }
+
+            /* LISTENERS */
+            {% if tienePermiso('PERSONAL_CARGOS.GUARDAR') %}
+            vista.DOM.crearCargo.addEventListener('click', () => {
+                vista.FUNCION.crearCargo();
+            });
+            {% endif %}
+            /* END LISTENERS */
+
+
+            document.addEventListener("DOMContentLoaded", function(e) {
+                tablaCargos = $('#tablaCargos').DataTable({
+                    buttons: ['PDF_CARGOS', 'EXCEL_CARGOS'],
+                    ajax: {
+                        url: "{{baseUrl}}/cargos/listar",
+                        type: "GET",
+                        dataSrc: json => json.data.map(item => {
+                            let accionDetalle = ``;
+                            let accionEliminarCargo = ``;
+                            let accionEditarCargo = ``;
+                            
+                            {% if tienePermiso('PERSONAL_CARGOS.ELIMINAR') %}
+                                accionEliminarCargo = `onclick='FADU.FUNCION.eliminarCargo(${item.id_cargo})'`;
+                            {% endif %}
+
+                            {% if tienePermiso('PERSONAL_CARGOS.DETALLE') %}
+                                accionDetalle = `title="Ver Detalle" style="cursor: pointer" onclick='FADU.FUNCION.detalleCargo(${item.id_cargo})'`;
+                            {% endif %}
+    
+                            return [
+                                `<div ${accionDetalle} class="rowsTable${item.id_cargo}">
+                                ${item.cod_cargo}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.id_cargo}">
+                                ${item.desc_cargo}
+                                </div>`
+                            ];
+                        }),
+                    }              
+                })
+                initTableButtons();
+            });
+         
+
+            {% if tienePermiso('PERSONAL_CARGOS.GUARDAR') %}
+                vista.FUNCION.crearCargo = () => {
+                   var url = `{{baseUrl}}/cargos/crear`;
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        cache: true,
+                        success: async response => {
+                            await abrirModal(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+            {% endif %}
+
+            {% if tienePermiso('PERSONAL_CARGOS.DETALLE') %}
+                vista.FUNCION.detalleCargo = (idCargo) => {
+                   var url = "{{baseUrl}}/cargos/detalle";
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        data: {idCargo: idCargo},
+                        cache: true,
+                        success: async response => {
+                            await abrirModal(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+            {% endif %}
+    }
+    </script>   
+{% endblock %}   
+
+{% block content %} 
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-5">
+        {% if tienePermiso('PERSONAL_CARGOS.GUARDAR') %}
+            <button id="crearCargo" class="btn-nuevo">NUEVO</button>
+        {% endif %}
+            <table id="tablaCargos" class="table table-app">
+                <thead class="thead-app">
+                    <tr>
+                        <th>CÓDIGO CARGO</th>
+                        <th>DESCRIPCIÓN CARGO</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div> 
+{% endblock %}   
+
+
+

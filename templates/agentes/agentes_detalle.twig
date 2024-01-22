@@ -1,0 +1,743 @@
+{% extends "embeds/extends/modal.twig" %}
+{% block style %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@5.9.2/dist/dropzone.css" />
+    <style>
+        #formAgentes{
+            width: 100%;
+            height: 100%;
+        }
+
+        .card{
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .form-control text-uppercase[readonly]{
+            background: #FFF;
+        }
+
+        .dz-progress {
+            display: none !important;
+        }
+
+        .dropzone{
+            border: none !important;
+            /*box-shadow: 2px 4px 20px 0px rgba(0,0,0,0.2)*/
+        }
+
+        .dropzone .dz-preview .dz-image {
+            border-radius: 100% !important;
+            width: 150px;
+            height: 150px;
+        }
+
+        .dz-image > img{
+            border-radius: 100% !important;
+            width: 100%;
+            height: 100%;
+        }
+
+        .div-foto > img {
+            border-radius: 100% !important;
+        }
+
+        .dz-details{
+            display: none !important;
+        }
+
+        .dropzone .dz-preview:hover .dz-image img {
+          -webkit-transform: scale(1, 1);
+          -moz-transform: scale(1, 1);
+          -ms-transform: scale(1, 1);
+          -o-transform: scale(1, 1);
+          transform: scale(1, 1);
+          -webkit-filter: blur(8px);
+          filter: blur(0px);
+        }
+        .dropzoneContainer{
+            padding: 0px 20px 0px 20px;
+        }
+
+        .dz-message{
+            width: 11rem;
+            box-shadow: 2px 4px 20px 0px rgba(0,0,0,0.2);
+            padding: 50px 5px 50px 5px;
+        }
+        
+        .dz-error-message{
+            left: 5px !important;
+            top: 100% !important;
+            margin-top: 10px !important;
+            padding: 10px !important;
+            font-size: 14px !important;
+            text-align: center;
+            background: #be1f1f;
+            color: #ffffff;
+            box-shadow: 0px 0px 12px 0px rgb(0 0 0);
+        }
+
+        .dz-remove{
+            text-decoration: none;
+            background-color: #b5000054;
+            color: #fff;
+            transition: all 0.4s ease-out;
+            border-radius: 12px;
+            padding: 3px;
+            margin-top: 1rem;
+        }
+
+        .dz-remove:hover{
+            text-decoration: none !important;
+            background-color: #b50000e0;
+            color: #fff;
+        }
+
+        @media only screen and (max-width: 768px) {
+            .card {
+                flex-direction: column;
+            }
+        }
+    </style>
+{% endblock %}
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/dropzone@5.9.2/dist/dropzone.js"></script>
+
+    <script>
+    FADU.modal = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+    vista.agente = {{agente ? (agente | json_encode | raw) : '[]' }};
+    vista.accion = {{accion ? (accion | json_encode | raw) : 'null' }};
+    let numeroPaso = 0;
+
+    vista.DOM = {
+        //Step 1:
+        legajo: document.querySelector("#legajo"),
+        nombre_agente: document.querySelector("#nombre_agente"),
+        apellido_agente: document.querySelector("#apellido_agente"),
+        dni_agente: document.querySelector("#dni_agente"),
+        cuil_agente: document.querySelector("#cuil_agente"),
+        genero: document.querySelector("#genero"),
+        estado_civil: document.querySelector("#estado_civil"),
+        fecha_nacimiento: document.querySelector("#fecha_nacimiento"),
+        //Step 2:
+        pais_nacimiento: document.querySelector("#pais_nacimiento"),
+        provincia_nacimiento: document.querySelector("#provincia_nacimiento"),
+        localidad_nacimiento: document.querySelector("#localidad_nacimiento"),
+        pais_residencia: document.querySelector("#pais_residencia"),
+        provincia_residencia: document.querySelector("#provincia_residencia"),
+        localidad_residencia: document.querySelector("#localidad_residencia"),
+        codigo_postal: document.querySelector("#codigo_postal"),
+        telefono: document.querySelector("#telefono"),
+        calle_domicilio: document.querySelector("#calle_domicilio"),
+        numero_domicilio: document.querySelector("#numero_domicilio"),
+        departamento_domicilio: document.querySelector("#departamento_domicilio"),
+        email: document.querySelector("#email"),
+        franquero: document.querySelector("#franquero"),
+        //Step 3:
+        divConfirmacion: document.querySelector("#divConfirmacion"),
+        //SmartWizard:
+        steps: document.querySelectorAll('#smartwizard ul li div'),
+        contents: document.querySelectorAll('#smartwizard .step'),
+        prev_btn: document.querySelectorAll('.prev_btn'),
+        next_btn: document.querySelectorAll('.next_btn'),
+        //Form:
+        guardar: document.querySelector('#guardar'),
+        //eliminar: document.querySelector('#eliminar'),
+        form: document.querySelector("#formAgentes"),
+    };
+
+    // AGENTE DETALLE
+    if(vista.agente.length != 0){
+        vista.id_pais_nacimiento = vista.agente.pais_nacimiento;
+        vista.id_pais_residencia = vista.agente.pais_residencia;
+        vista.id_provincia_nacimiento = vista.agente.provincia_nacimiento;
+        vista.id_provincia_residencia = vista.agente.provincia_residencia;
+    }
+    // FIN AGENTE
+
+        const steps = vista.DOM.steps;
+        const contents = vista.DOM.contents;
+    
+        for(let i = 0; i < vista.DOM.next_btn.length; i++){            
+            vista.DOM.next_btn[i].addEventListener('click', (e) => {                
+                if(numeroPaso == 0){
+                    // Step 1:
+                    if(isEmpty(vista.DOM.legajo.value)){swal({icon: 'error',text: 'DEBE COMPLETAR UN LEGAJO VÁLIDO.'}); return false;};
+                    if(isEmpty(vista.DOM.fecha_nacimiento.value)){swal({icon: 'error',text: 'DEBE COMPLETAR LA FECHA DE NACIMIENTO.'}); return false;};
+                    if(isEmpty(vista.DOM.nombre_agente.value)){swal({icon: 'error',text: 'DEBE COMPLETAR EL NOMBRE.'}); return false;};
+                    if(isEmpty(vista.DOM.apellido_agente.value)){swal({icon: 'error',text: 'DEBE COMPLETAR EL APELLIDO.'}); return false;};
+                    if(isEmpty(vista.DOM.dni_agente.value)){swal({icon: 'error',text: 'DEBE COMPLETAR DNI'}); return false;};
+                    if(isEmpty(vista.DOM.cuil_agente.value)){swal({icon: 'error',text: 'DEBE COMPLETAR CUIL.'}); return false;};
+                    if(isEmpty(vista.DOM.genero.value)){swal({icon: 'error',text: 'DEBE COMPLETAR EL GÉNERO.'}); return false;};
+                    if(isEmpty(vista.DOM.estado_civil.value)){swal({icon: 'error',text: 'DEBE COMPLETAR EL ESTADO CIVIL.'}); return false;};
+                    
+                }
+
+                if(numeroPaso == 1){
+                    // Step 2:
+                    if(isEmpty(vista.DOM.pais_nacimiento.value)){swal({icon: 'error',text: 'DEBE COMPLETAR PAÍS NACIMIENTO.'}); return false;};
+                    if(isEmpty(vista.DOM.provincia_nacimiento.value)){swal({icon: 'error',text: 'DEBE COMPLETAR PROVINCIA DE NACIMIENTO.'}); return false;};
+                    if(isEmpty(vista.DOM.localidad_nacimiento.value)){swal({icon: 'error',text: 'DEBE COMPLETAR LOCALIDAD DE NACIMIENTO.'}); return false;};
+                    if(isEmpty(vista.DOM.pais_residencia.value)){swal({icon: 'error',text: 'DEBE COMPLETAR PAÍS RESIDENCIA.'}); return false;};
+                    if(isEmpty(vista.DOM.provincia_residencia.value)){swal({icon: 'error',text: 'DEBE COMPLETAR PROVINCIA RESIDENCIA'}); return false;};
+                    if(isEmpty(vista.DOM.localidad_residencia.value)){swal({icon: 'error',text: 'DEBE COMPLETAR LOCALIDAD RESIDENCIA.'}); return false;};
+                    if(isEmpty(vista.DOM.codigo_postal.value)){swal({icon: 'error',text: 'DEBE COMPLETAR CÓDIGO POSTAL.'}); return false;};
+                    if(isEmpty(vista.DOM.calle_domicilio.value)){swal({icon: 'error',text: 'DEBE COMPLETAR CALLE DOMICILIO.'}); return false;};
+                    if(isEmpty(vista.DOM.numero_domicilio.value)){swal({icon: 'error',text: 'DEBE COMPLETAR NUMERO DOMICILIO.'}); return false;};
+                    if(isEmpty(vista.DOM.departamento_domicilio.value)){swal({icon: 'error',text: 'DEBE COMPLETAR DEPARTAMENTO DOMICILIO.'}); return false;};
+
+                    var datosAgente = {
+                        id_agente: vista.agente.legajo ? parseInt(vista.agente.legajo) : parseInt(vista.DOM.legajo.value),
+                        legajo: parseInt(vista.DOM.legajo.value),
+                        fecha_nacimiento: vista.DOM.fecha_nacimiento.value.toUpperCase(),
+                        nombre_agente: vista.DOM.nombre_agente.value.toUpperCase(),
+                        apellido_agente: vista.DOM.apellido_agente.value.toUpperCase(),
+                        dni_agente: vista.DOM.dni_agente.value.toUpperCase(),
+                        cuil_agente: vista.DOM.cuil_agente.value.toUpperCase(),
+                        genero: vista.DOM.genero.value.toUpperCase(),
+                        estado_civil: vista.DOM.estado_civil.value.toUpperCase(),
+                        email: vista.DOM.email.value.toUpperCase(),
+                        franquero: vista.DOM.franquero.value.toUpperCase(),
+                        telefono: vista.DOM.telefono.value.toUpperCase(),
+                        pais_nacimiento: vista.DOM.pais_nacimiento.value.toUpperCase(),
+                        id_pais_nacimiento: vista.id_pais_nacimiento,
+                        provincia_nacimiento: vista.DOM.provincia_nacimiento.value.toUpperCase(),
+                        id_provincia_nacimiento: vista.id_provincia_nacimiento,
+                        localidad_nacimiento: vista.DOM.localidad_nacimiento.value.toUpperCase(),
+                        pais_residencia: vista.DOM.pais_residencia.value.toUpperCase(),
+                        id_pais_residencia: vista.id_pais_residencia,
+                        provincia_residencia: vista.DOM.provincia_residencia.value.toUpperCase(),
+                        id_provincia_residencia: vista.id_provincia_residencia,
+                        localidad_residencia: vista.DOM.localidad_residencia.value.toUpperCase(),
+                        codigo_postal: vista.DOM.codigo_postal.value.toUpperCase(),
+                        calle_domicilio: vista.DOM.calle_domicilio.value.toUpperCase(),
+                        numero_domicilio: vista.DOM.numero_domicilio.value.toUpperCase(),
+                        departamento_domicilio: vista.DOM.departamento_domicilio.value.toUpperCase(),
+                        foto_agente: vista.foto_agente,
+                        accion: vista.accion
+                    };
+                    
+                    vista.agente = [];
+                    vista.agente.push(datosAgente);
+                }
+
+                numeroPaso = i+1;                
+                vista.FUNCION.setActiveStep(i+1);
+            });
+        };
+
+        vista.FUNCION.dibujarConfirmacion = (agente) => {
+            
+            if(document.querySelector('.dz-image img')){
+                document.querySelector('.dz-image img').setAttribute("width", "220px");
+                document.querySelector('.dz-image img').setAttribute("height", "220px");
+            }
+
+            vista.DOM.divConfirmacion.innerHTML = ``;
+            let html = `
+                <div class="card-body text-black" style="justify-content:center;">
+                    <div class="col-12 col-sm-12 col-md-12 col-xl-12 text-center div-foto">
+                        ${document.querySelector('.dz-image') ? document.querySelector('.dz-image').innerHTML : '<img src="{{baseUrl}}/public/images/no_image.png" style="width:220px; height: 220px; border-radius: 100%;" class="img-fluid" alt="profile image">'}
+                        <p class="mt-2 mb-2"><b>Legajo: </b>${agente.legajo}</p>
+                        <p class="mt-2 mb-2"><b>Nombre y Apellido: </b>${agente.nombre_agente}, ${agente.apellido_agente}</p>
+                        <p class="mt-2 mb-2"><b>Dni / Cuil: </b>${agente.dni_agente} / ${agente.cuil_agente}</p>
+                    </div>
+                    <div class="row">
+                    <hr>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-4 mt-2 mb-2"><b>Fecha Nacimiento: </b>${agente.fecha_nacimiento}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-4 mt-2 mb-2"><b>Género: </b>${agente.genero}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-4 mt-2 mb-2"><b>Estado Civil: </b>${agente.estado_civil}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-4 mt-2 mb-2"><b>Email: </b>${agente.email}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-4 mt-2 mb-2"><b>Teléfono: </b>${agente.telefono}</p>                        
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-4 mt-2 mb-2"><b>Franquero: </b>${agente.franquero}</p>
+                    <hr>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>País Residencia: </b>${agente.pais_residencia}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>Provincia Residencia: </b>${agente.provincia_residencia}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>Localidad Residencia: </b>${agente.localidad_residencia}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>Domicilio/Piso/Depto(CP): </b>${agente.calle_domicilio} ${agente.numero_domicilio} - ${agente.departamento_domicilio} (${agente.codigo_postal})</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>País Nacimiento: </b>${agente.pais_nacimiento}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>Provincia Nacimiento: </b>${agente.provincia_nacimiento}</p>
+                        <p class="col-12 col-sm-12 col-md-4 col-xl-3 mt-2 mb-2"><b>Localidad Nacimiento: </b>${agente.localidad_nacimiento}</p>
+                    </div>
+                </div>`;
+            vista.DOM.divConfirmacion.innerHTML = html;
+        };
+        
+        for(let i = 0; i < vista.DOM.prev_btn.length; i++){
+            vista.DOM.prev_btn[i].addEventListener('click', (e) => {
+                numeroPaso--;
+                vista.FUNCION.setActiveStep(i);
+            });
+        };
+    
+        vista.FUNCION.setActiveStep = (index) => {
+            
+            steps.forEach((step, i) => {
+                if (i === index) {
+                    step.classList.add('activo');
+                    contents[i].classList.add('activo');
+                } else {
+                    step.classList.remove('activo');
+                    contents[i].classList.remove('activo');
+                };
+            });
+
+            if(index == 2){
+                vista.FUNCION.dibujarConfirmacion(vista.agente[0]);
+            };
+        };
+        
+        vista.FUNCION.setActiveStep(0);
+
+    $(vista.DOM.pais_nacimiento).autocomplete({
+                    autoFocus: true,
+                    minLength: 1,
+            source: function (request, response) {
+                vista.agente.pais_nacimiento = null;
+                vista.id_pais_nacimiento = null;
+                vista.agente.provincia_nacimiento = null;
+                vista.id_provincia_nacimiento = null;
+                vista.DOM.provincia_nacimiento.value = '';
+                $.post({
+                    url: "{{baseUrl}}" + "/agentes/ACPais",
+                    dataType: "json",
+                    data: {
+                        descripcion: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    },
+                });
+            },
+            select: function (event, ui) {
+                if (!ui.item.id) {
+                    $(this).val('');
+                    return false;
+                }                
+                vista.id_pais_nacimiento = ui.item.id;
+                vista.DOM.pais_nacimiento.value = ui.item.value; 
+            }
+    }).autocomplete("instance")._renderItem = function (ul, item) {
+        if (item.id) {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px;'>" +  item.value + 
+                            "<br> <span style='font-size:11px;font-weight:bold;color:#AAA;'> FADU UBA - PABELLON III</span> </div>")
+                    .appendTo(ul);
+        } else {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px'>NO HAY RESULTADOS PARA LA BÚSQUEDA</div>")
+                    .appendTo(ul);
+        }
+    };
+
+    $(vista.DOM.pais_residencia).autocomplete({
+                    autoFocus: true,
+                    minLength: 1,
+            source: function (request, response) {
+                vista.agente.pais_residencia = null;
+                vista.id_pais_residencia = null;
+                vista.agente.provincia_residencia = null;
+                vista.id_provincia_residencia = null;
+                vista.DOM.provincia_residencia.value = '';
+                $.post({
+                    url: "{{baseUrl}}" + "/agentes/ACPais",
+                    dataType: "json",
+                    data: {
+                        descripcion: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    },
+                });
+            },
+            select: function (event, ui) {
+                if (!ui.item.id) {
+                    $(this).val('');
+                    return false;
+                }                
+                vista.id_pais_residencia = ui.item.id;
+                vista.DOM.pais_residencia.value = ui.item.value; 
+            }
+    }).autocomplete("instance")._renderItem = function (ul, item) {
+        if (item.id) {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px;'>" +  item.value + 
+                            "<br> <span style='font-size:11px;font-weight:bold;color:#AAA;'> FADU UBA - PABELLON III</span> </div>")
+                    .appendTo(ul);
+        } else {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px'>NO HAY RESULTADOS PARA LA BÚSQUEDA</div>")
+                    .appendTo(ul);
+        }
+    };
+    
+    $(vista.DOM.provincia_nacimiento).autocomplete({
+                    autoFocus: true,
+                    minLength: 1,
+            source: function (request, response) {
+                vista.agente.provincia_nacimiento = null;
+                vista.id_provincia_nacimiento = null;
+                $.post({
+                    url: "{{baseUrl}}" + "/agentes/ACProvincia",
+                    dataType: "json",
+                    data: {
+                        id_pais: vista.id_pais_nacimiento,
+                        descripcion: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    },
+                });
+            },
+            select: function (event, ui) {
+                if (!ui.item.id) {
+                    $(this).val('');
+                    return false;
+                }                
+                vista.id_provincia_nacimiento = ui.item.id;
+                vista.DOM.provincia_nacimiento.value = ui.item.value; 
+            }
+    }).autocomplete("instance")._renderItem = function (ul, item) {
+        if (item.id) {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px;'>" + item.value + 
+                            "<br> <span style='font-size:11px;font-weight:bold;color:#AAA;'> FADU UBA - PABELLON III</span> </div>")
+                    .appendTo(ul);
+        } else {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px'>NO HAY RESULTADOS PARA LA BÚSQUEDA</div>")
+                    .appendTo(ul);
+        }
+    };
+
+    $(vista.DOM.provincia_residencia).autocomplete({
+                    autoFocus: true,
+                    minLength: 1,
+            source: function (request, response) {
+                vista.agente.provincia_residencia = null;
+                vista.id_provincia_residencia = null;
+                $.post({
+                    url: "{{baseUrl}}" + "/agentes/ACProvincia",
+                    dataType: "json",
+                    data: {
+                        id_pais: vista.id_pais_residencia,
+                        descripcion: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    },
+                });
+            },
+            select: function (event, ui) {
+                if (!ui.item.id) {
+                    $(this).val('');
+                    return false;
+                }                
+                vista.id_provincia_residencia = ui.item.id;
+                vista.DOM.provincia_residencia.value = ui.item.value; 
+            }
+    }).autocomplete("instance")._renderItem = function (ul, item) {
+        if (item.id) {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px;'>"  + item.value + 
+                            "<br> <span style='font-size:11px;font-weight:bold;color:#AAA;'> FADU UBA - PABELLON III</span> </div>")
+                    .appendTo(ul);
+        } else {
+            return $("<li>")
+                    .append("<div style='font-size:18px;padding: 5px'>NO HAY RESULTADOS PARA LA BÚSQUEDA</div>")
+                    .appendTo(ul);
+        }
+    };
+
+    flatpickr(vista.DOM.fecha_nacimiento, {
+        dateFormat: "d/m/Y",
+        allowInput: true,
+        locale: {
+          firstDayOfWeek: 1,
+          weekdays: {
+            shorthand: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+            longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],         
+          }, 
+          months: {
+            shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Оct', 'Nov', 'Dic'],
+            longhand: ['Enero', 'Febreo', 'Мarzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+          },
+        },
+    });
+    
+    {% if tienePermiso('PERSONAL_AGENTES.GUARDAR') %}
+
+    var dropzone = new Dropzone("#miDropzone", { 
+        autoProcessQueue: false,
+        url: '{{baseUrl}}/api/agentes/subirDocumentacion',
+        maxThumbnailFilesize: 1,
+        maxFilesize: 0.5,
+        maxFiles: 1,
+        thumbnailWidth: 220,
+        thumbnailHeight: 220,
+        uploadMultiple: false,
+        dictRemoveFile: "Remover Foto",
+        acceptedFiles: ".jpg,.png,.jpeg",
+        addRemoveLinks: true,
+        dictFileTooBig: 'El tamaño de la imagen no puede superar los 500kb',
+        dictInvalidFileType: 'El formato del adjunto es inválido, debe ser jpg, png, jpeg',
+        removedfile: function (file) {
+            vista.foto_agente = null;
+            if(vista.agente.length != 0){vista.agente.foto_agente = null};
+            document.querySelector(".dz-preview").remove();
+            dzClosure.enable();
+            vista.DOM.guardar.disabled = false;
+        },
+        init: function() {
+          dzClosure = this;
+
+          if(vista.agente.length != 0){
+              $.ajax({
+                  url: '{{baseUrl}}/api/agentes/cargarDocumentacion',
+                  type: 'POST',
+                  data: {foto_agente: vista.agente.foto_agente},
+                  dataType: 'json',
+                  success: function(response){
+                      $.each(response, function(key,value) {
+                          var mockFile = [{ name: value.name, size: value.size, type: value.type, }];
+                          dzClosure.emit("addedfile", mockFile);
+                          dzClosure.emit("thumbnail", mockFile, value.path);
+                          dzClosure.emit("complete", mockFile);
+                          vista.foto_agente = mockFile[0].name;
+                      });
+                  }
+              });
+              
+              dzClosure.disable();
+          }
+
+        this.on("addedfile", function(file) {
+            vista.foto_agente = file.name;
+          });
+
+          this.on("sending", function(data, xhr, formData) {
+              formData.append("agente", JSON.stringify(vista.agente[0]));
+          });
+
+          this.on("maxfilesexceeded", function(file) {
+              this.removeAllFiles();
+              this.addFile(file);
+          });
+
+          this.on("error", function (file, responseText) {            
+              var status = $(file.previewElement).find('.dz-error-message');
+              status.show();
+              var msgContainer =  $(file.previewElement).find('.dz-image');
+              msgContainer.css({"border" : "2px solid #d90101"})
+              vista.DOM.guardar.disabled = true;
+              vista.foto_agente = null;
+          });
+
+        }
+    });
+
+    {% endif %}
+
+    {% if tienePermiso('PERSONAL_AGENTES.GUARDAR') %}
+
+        vista.FUNCION.guardar = (event) => {
+            event.preventDefault();
+            vista.DOM.guardar.disabled = true;
+            dropzone.processQueue();  
+
+            let url = (vista.agente[0].accion == 'editar') ? `{{baseUrl}}/api/agentes/${vista.agente.legajo}/editar` : `{{baseUrl}}/api/agentes/crear`;
+                $.ajax({
+                    type: (vista.agente[0].accion == 'editar') ? 'PUT' : 'POST',
+                    url: url,
+                    dataType: 'json',
+                    data: {
+                        datos: vista.agente[0],
+                        foto_agente: vista.foto_agente
+                    },
+                    success: json => { swal({ icon: 'success', text: json.mensaje })
+                        .then( () => { recargarTabla(tablaAgentes); cerrarModal(); })
+                    },
+                    error: json => { swal({icon: 'error', text: json.responseJSON.error })
+                        vista.DOM.guardar.disabled = false;
+                    },
+                });
+            };
+
+    {% endif %}
+
+    };
+    </script>
+{% endblock %}
+{% block modalBody %}
+<form id="formAgentes" method="POST" enctype="multipart/form-data" onsubmit="FADU.modal.FUNCION.guardar(event)">  
+    <div id="smartwizard">
+        <ul class="nav nav-pills">
+          <li class="col-md-4 col-sm-4 col-12"><div class="text-center">Paso 1</div></li>
+          <li class="col-md-4 col-sm-4 col-12"><div class="text-center">Paso 2</div></li>
+          <li class="col-md-4 col-sm-4 col-12"><div class="text-center">Confirmar Agente</div></li>
+        </ul>
+
+        <div id="step-1" class="step">
+            <div class="card">
+                <div class="dropzoneContainer mt-3 mb-3">
+                    <!-- Dropzone -->
+                    <div id="miDropzone" class="dropzone text-black">
+                      <div class="dz-message" data-dz-message><span>Arrastra los archivos aquí o haz clic para cargarlos</span></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">                 
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="legajo" id="legajo" placeholder="legajo"  value="{{agente.legajo}}" autocomplete="off">
+                            <label for="legajo" class="input-label">LEGAJO</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="fecha_nacimiento" id="fecha_nacimiento" placeholder=""  value="{{agente.fecha_nacimiento}}" autocomplete="off">
+                            <label for="fecha_nacimiento" class="input-label">FECHA NACIMIENTO</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="nombre_agente" id="nombre_agente" placeholder="Nombre"  value="{{agente.nombre_agente}}" autocomplete="off">
+                            <label for="nombre_agente" class="input-label">NOMBRE</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="apellido_agente" id="apellido_agente" placeholder="Apellido"  value="{{agente.apellido_agente}}" autocomplete="off">
+                            <label for="apellido_agente" class="input-label">APELLIDO</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="dni_agente" id="dni_agente" placeholder="Dni"  value="{{agente.dni_agente}}" autocomplete="off">
+                            <label for="dni_agente" class="input-label">DNI</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="cuil_agente" id="cuil_agente" placeholder="Cuil"  value="{{agente.cuil_agente}}" autocomplete="off">
+                            <label for="cuil_agente" class="input-label">CUIL</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <select class="form-control text-uppercase" id="genero" name="genero" placeholder="Género">
+                                {% if agente == null %}
+                                    <option hidden selected value="">Seleccionar</option>
+                                {% else %}
+                                    <option selected hidden value="{{agente.genero}}" class="input-control">{{agente.genero}}</option>
+                                {% endif %}                                
+                                <option value="MASCULINO">MASCULINO</option>
+                                <option value="FEMENINO">FEMENINO</option>
+                                <option value="X">X</option>
+                            </select>
+                            <label for="genero" class="input-label">GÉNERO</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                             <select class="form-control text-uppercase" id="estado_civil" name="estado_civil" placeholder="Estado Civil">
+                                {% if agente == null %}
+                                    <option hidden selected value="">Seleccionar</option>
+                                {% else %}
+                                    <option selected hidden value="{{agente.estado_civil}}" class="input-control">{{agente.estado_civil}}</option>
+                                {% endif %}
+                                <option value="SOLTERO/A">SOLTERO/A</option>
+                                <option value="CASADO/A">CASADO/A</option>
+                                <option value="VIUDO/A">VUIDO/A</option>
+                            </select>
+                            <label for="estado_civil" class="input-label">ESTADO CIVIL</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="email" id="email" placeholder="Email"  value="{{agente.email}}" autocomplete="off">
+                            <label for="email" class="input-label">Email</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-xl-6 form-floating mb-4">
+                            <select class="form-control text-uppercase" id="franquero" name="franquero" placeholder="Franquero">
+                                {% if agente == null %}
+                                    <option hidden selected value="">Seleccionar</option>
+                                {% else %}
+                                    <option selected hidden value="{{agente.franquero}}" class="input-control">{{agente.franquero}}</option>
+                                {% endif %}
+                                <option value="SI">SI</option>
+                                <option selected value="NO">NO</option>
+                            </select>
+                            <label for="franquero" class="input-label">FRANQUERO</label>
+                        </div>
+                    </div>                
+                </div>                
+            </div>
+            <div class="button-container">
+                <button type="button" class="next_btn" style="width:100%">Siguiente</button>
+            </div>
+        </div>
+
+        <div id="step-2" class="step">
+            <div class="card">
+                <div class="card-body">                    
+                    <div class="row mb-5">
+                        <h3 class="text-black">Nacimiento</h3>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="pais_nacimiento" id="pais_nacimiento" placeholder="País nacimiento"  value="{{agente.nombre_pais_nacimiento}}" autocomplete="off">
+                            <label for="pais_nacimiento" class="input-label">País Nacimiento</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="provincia_nacimiento" id="provincia_nacimiento" placeholder="Provincia nacimiento"  value="{{agente.nombre_provincia_nacimiento}}" autocomplete="off">
+                            <label for="provincia_nacimiento" class="input-label">Provincia Nacimiento</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="localidad_nacimiento" id="localidad_nacimiento" placeholder="Localidad nacimiento"  value="{{agente.localidad_nacimiento}}" autocomplete="off">
+                            <label for="localidad_nacimiento" class="input-label">Localidad Nacimiento</label>
+                        </div>
+                    </div>
+                    <div class="row mb-5">
+                        <h3 class="text-black">Residencia</h3>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="pais_residencia" id="pais_residencia" placeholder="País residencia"  value="{{agente.nombre_pais_residencia}}" autocomplete="off">
+                            <label for="pais_residencia" class="input-label">País Residencia</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="provincia_residencia" id="provincia_residencia" placeholder="Provincia residencia"  value="{{agente.nombre_provincia_residencia}}" autocomplete="off">
+                            <label for="provincia_residencia" class="input-label">Provincia Residencia</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="localidad_residencia" id="localidad_residencia" placeholder="Localidad residencia"  value="{{agente.localidad_residencia}}" autocomplete="off">
+                            <label for="localidad_residencia" class="input-label">Localidad Residencia</label>
+                        </div>
+                    </div>
+                    <div class="row mb-5">
+                        <h3 class="text-black">Domicilio</h3>
+                        <div class="col-12 col-sm-6 col-md-2 col-xl-2 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="telefono" id="telefono" placeholder="Teléfono"  value="{{agente.telefono}}" autocomplete="off">
+                            <label for="telefono" class="input-label">Teléfono</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-2 col-xl-2 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="codigo_postal" id="codigo_postal" placeholder="Código postal"  value="{{agente.codigo_postal}}" autocomplete="off">
+                            <label for="codigo_postal" class="input-label">Código Postal</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-4 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="calle_domicilio" id="calle_domicilio" placeholder="Calle domicilio"  value="{{agente.calle_domicilio}}" autocomplete="off">
+                            <label for="calle_domicilio" class="input-label">Calle</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-2 col-xl-2 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="numero_domicilio" id="numero_domicilio" placeholder="Número domicilio"  value="{{agente.numero_domicilio}}" autocomplete="off">
+                            <label for="numero_domicilio" class="input-label">Número</label>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-2 col-xl-2 form-floating mb-4">
+                            <input type="text" class="form-control text-uppercase" name="departamento_domicilio" id="departamento_domicilio" placeholder="Departamento domicilio"  value="{{agente.departamento_domicilio}}" autocomplete="off">
+                            <label for="departamento_domicilio" class="input-label">Piso / Depto </label>
+                        </div>
+                    </div>                  
+                </div>
+            </div>
+            <div class="button-container">
+                <button type="button" class="prev_btn" style="width:50%">Anterior</button>
+                <button type="button" class="next_btn" style="width:50%">Siguiente</button>
+            </div>
+        </div>
+
+        <div id="step-3" class="step">
+            <div class="card">
+                <div id="divConfirmacion" class="card-body">                    
+                </div>
+            </div>
+            <div class="button-container">
+                <button type="button" class="prev_btn" style="width:50%">Anterior</button>
+                <button id="guardar" type="submit" form="formAgentes" class="confirm-btn" style="width:50%">Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+</form>
+{% endblock %}

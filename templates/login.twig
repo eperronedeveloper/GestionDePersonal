@@ -1,0 +1,165 @@
+{% extends "embeds/extends/base.twig" %}
+{% block title %}{{title}}{% endblock %}
+{% block style %} 
+    <style>
+        .div-registro{
+            cursor: pointer;
+            border-color: #FFF !important;
+        }
+        .app-login{
+            width:100%;
+        }
+        .input-login{
+            text-align: center;
+            
+        }
+        .card {
+            margin: 0 auto;
+            float: none;
+            margin-bottom: 10px;
+            box-shadow: 0px 0px 15px 0px rgb(0 0 0 / 30%);
+        }
+        .card-img-top {
+            align-content: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #btn-entrar {
+            margin-top: 25px;
+            margin-bottom: 25px;
+        }
+
+        img{
+            width:40%
+        }
+
+    </style>
+
+{% endblock %} 
+
+{% block content %} 
+
+    <div class="app-login">
+        <div class="card" style="width: 24rem;">
+        <div class="card-img-top">
+            <img src="{{baseUrl}}/public/images/user.jpg" alt="ICONO DE USUARIO EN INICIO SESION">
+        </div>
+            <form id="formLogin" method="POST" id="login">
+                <div class="card-body">
+                       <h5 class="card-title text-center">INICIAR SESIÓN</h5>
+                    <div class="form-floating mb-3">
+                      <input type="text" class="form-control text-uppercase" id="username" name="username" placeholder=" " autocomplete="off">
+                      <label for="username" class="input-label">USUARIO</label>
+                    </div>
+                    <div class="form-floating">
+                      <input type="password" class="form-control" id="password" name="password" placeholder=" " autocomplete="off">
+                      <label for="password" class="input-label">CONTRASEÑA</label>
+                    </div>
+
+                    <div class="text-center">
+                        <span class="text-center">     
+                            <button id="btn-entrar" type="submit" class="btn-entrar">Entrar <i class="fa fa-sign-in"></i></button>
+                        </span>
+                    </div>
+                </div>
+            </form>   
+        </div>
+    </div>
+   
+{% endblock %}
+
+{% block script %}
+
+    <script>
+    
+    let elementos = {
+        username: document.querySelector('#username'),
+        password: document.querySelector('#password'),
+        form: document.querySelector('#formLogin'),
+    };
+    
+    elementos.username.addEventListener('input', (e) => {
+      elementos.username.value = elementos.username.value.replace(/[^0-9]/g, '').replace(/(\..*)\./g, '$1');
+    })
+
+    document.addEventListener("DOMContentLoaded", function(e) { 
+
+        forzarCierreSesion = (idUsuario) => {
+            swal({
+                title: `INGRESAR DNI`,
+                buttons: ['CANCELAR', 'ACEPTAR'],
+                content: {
+                    element: "input",
+                    attributes: {
+                      type: "password",
+                      min: '0',
+                      value: ''
+                    },
+                },
+            }).then((dni) => {
+                if(dni){
+                    $.ajax({
+                        type: 'POST',
+                        url: `{{baseUrl}}/validarIdentidad`,
+                        dataType: 'json',
+                        data: {
+                            idUsuario: idUsuario,
+                            dni:dni
+                        },
+                        success: () => {
+                            window.location.href = URL_PORTADA;
+                        },
+                        error: (json) => {
+                            swal({
+                            icon: 'error',
+                            text: json.responseJSON.error,
+                        })
+                    }
+                    })
+                }
+            })
+        };
+
+        elementos.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost/app-desa/core-fadu/iniciar-sesion',
+                dataType: 'json',
+                data: {
+                    username: elementos.username.value,
+                    password: elementos.password.value
+                },
+                success: function (response) {
+                    if(response.status === 401){
+                        swal({
+                            icon: "warning",
+                            text: response.mensaje,
+                            buttons: ['CANCELAR', 'CERRAR SESIÓN'],
+                            dangerMode: true,
+                        }).then((cerrarSesion) => {
+                            if(cerrarSesion){
+                                forzarCierreSesion(response.idUsuario);
+                            }
+                        })
+                    }
+
+                    if(response.status === 200){
+                        var urlPortada = "{{baseUrl}}/portada";
+                        window.location.href = urlPortada;
+                    }
+                },
+                error: function (json) {
+                    swal({
+                        icon: 'error',
+                        text: json.responseJSON.error,
+                    })
+                }
+            });
+        });
+    });
+
+    </script>   
+{% endblock %} 

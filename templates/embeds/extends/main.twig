@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{% block title %}{% endblock %}</title>
+        
+<link rel="icon" href="favicon.ico" type="image/x-icon" />
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/vendor/bootstrap/css/bootstrap.min.css">
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/vendor/bootstrap/icons/font/bootstrap-icons.css">
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/vendor/datatables/datatables.min.css" > 
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/css/app.css">   
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/css/dataTableStyles.css">  
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/vendor/fontawesome/css/font-awesome.css">
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/vendor/fontawesome/css/font-awesome.min.css">
+<link  rel="stylesheet" type="text/css" href="{{baseUrl}}/public/css/flatpickr.css">
+<!-- Google fonts-->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100&family=Quicksand:wght@300&display=swap" rel="stylesheet">
+<!-- Dropzone JS -->
+<link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
+    {% block style %}{% endblock %} 
+        
+    </head>
+<body>
+
+    {% block htmlBody %}{% endblock %} 
+    
+<script src="{{baseUrl}}/public/vendor/jquery/jquery.min.js"></script>
+<script src="{{baseUrl}}/public/vendor/jquery/jquery-ui.min.js"></script>
+<script src="{{baseUrl}}/public/vendor/jquery/jquery.validate.min.js"></script>
+<script src="{{baseUrl}}/public/vendor/bootstrap/js/bootstrap.min.js"></script>
+
+<script src="{{baseUrl}}/public/vendor/moment/moment-with-locales.min.js"></script>
+<script src="{{baseUrl}}/public/vendor/sweetalert/sweetalert.min.js"></script>
+<script src="{{baseUrl}}/public/vendor/datatables/datatables.min.js"></script>
+<script src="{{baseUrl}}/public/vendor/jsbarcode/jsbarcode.min.js"></script>
+
+<script src="{{baseUrl}}/public/js/app.js"></script>
+<script src="{{baseUrl}}/public/js/dataTable.js"></script>
+<script src="{{baseUrl}}/public/js/flatpickr.js"></script>
+<script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
+
+    {% block script %}{% endblock %}
+    
+</body>
+</html>

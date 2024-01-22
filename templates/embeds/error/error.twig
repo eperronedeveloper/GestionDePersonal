@@ -1,0 +1,70 @@
+{% extends "embeds/extends/base.twig" %}
+{% block style %}
+    <style>
+        *{
+    transition: all 0.6s;
+}
+
+html {
+    height: 100%;
+}
+
+body{
+    font-family: 'Lato', sans-serif;
+    color: #888;
+    margin: 0;
+}
+
+#errores{
+    display: flex;
+    text-align: center;
+    justify-content: center;
+}
+
+.fof{
+	display: grid;
+    vertical-align: middle;
+    justify-content: center;
+}
+
+.fof h1{
+	  font-size: 2.6rem;
+	  display: inline-block;
+	  padding-right: 12px;
+	  animation: type .5s alternate infinite;
+}
+p {
+    font-size: 17px;
+}
+
+
+
+@keyframes type{
+	  from{box-shadow: inset -3px 0px 0px #888;}
+	  to{box-shadow: inset -3px 0px 0px transparent;}
+}
+    </style>
+{% endblock %}
+
+{% block content %}
+
+{% if constant('DEBUG') %}
+<div class="fof text-center"><h1>ALGO SALIÓ MAL</h1></div>
+    <div class="container-fluid">
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item"><b>STATUS</b></li>
+            <li class="list-group-item">{{status}}</li>
+            <li class="list-group-item"><b>ERROR</b></li>
+            <li class="list-group-item">{{error}}</li>
+        </ul>
+    </div>
+{% else %}
+<div class="fof text-center"><h1>ALGO SALIÓ MAL</h1>
+<p>{{error}}</p>
+<p><b>{{status}}</b></p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block script %}{% endblock %}

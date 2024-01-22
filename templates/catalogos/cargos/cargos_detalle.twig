@@ -1,0 +1,117 @@
+{% extends "embeds/extends/modal.twig" %}
+{% block style %}{% endblock %}
+{% block script %}
+    <script>
+    FADU.modal = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+    vista.cargo = {{cargo ? (cargo | json_encode | raw) : 'null' }};
+    
+    vista.DOM = {
+        descripcion: document.querySelector("#descripcion"),
+        guardar: document.querySelector('#guardar'),
+        eliminar: document.querySelector('#eliminar'),
+        form: document.querySelector("#formCargos")
+    };
+    
+   {% if cargo != null %}
+        {% if tienePermiso('PERSONAL_CARGOS.ELIMINAR') %}
+            vista.DOM.eliminar.addEventListener('click', (event) => {
+                vista.FUNCION.eliminar(vista.cargo.id_cargo);
+            });
+        {% endif %}
+    {% endif %}            
+
+    {% if tienePermiso('PERSONAL_CARGOS.GUARDAR') %}
+        vista.FUNCION.guardar = (event) => {
+            event.preventDefault();
+            vista.DOM.guardar.disabled = true;
+            let formData = new FormData(vista.DOM.form);
+
+            let datos = {
+                desc_cargo: formData.get('desc_cargo'),
+                cod_cargo: formData.get('cod_cargo'),
+            };
+            
+            let url = vista.cargo ? `{{baseUrl}}/api/cargos/${vista.cargo.id_cargo}/editar` : `{{baseUrl}}/api/cargos/crear`;
+                $.ajax({
+                    type: (vista.cargo) ? 'PUT' : 'POST',
+                    url: url,
+                    dataType: 'json',
+                    data: datos,
+                    success: json => { swal({ icon: 'success', text: json.mensaje })
+                        .then( () => { recargarTabla(tablaCargos); cerrarModal(); })
+                    },
+                    error: json => { swal({icon: 'error', text: json.responseJSON.error })
+                        vista.DOM.guardar.disabled = false;
+                    },
+                });
+            };
+    {% endif %}
+
+    {% if tienePermiso('PERSONAL_CARGOS.ELIMINAR') %}
+    vista.FUNCION.eliminar = (idCargo) => {
+                swal({
+                    icon: "warning",
+                    text: "ESTA SEGURO QUE DESEA ELIMINAR EL CARGO?",
+                    buttons: ['CANCELAR', 'ELIMINAR'],
+                    dangerMode: true,
+                }).then((willDelete) => {
+                if (willDelete) {
+                        let url = `{{baseUrl}}/api/cargos/${idCargo}/eliminar`;
+                    $.ajax({
+                        type: 'DELETE',
+                        url: url,
+                        dataType: 'json',
+                        success: function (json) {
+                        swal({
+                            icon: 'success',
+                            text: json.mensaje
+                        }).then( () => {
+                            recargarTabla(tablaCargos);
+                            cerrarModal();
+                        })
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    }); 
+                }
+                })
+            };
+    {% endif %}
+    }
+
+    </script>
+{% endblock %}
+{% block modalBody %}    
+    <form id="formCargos" onsubmit="FADU.modal.FUNCION.guardar(event)">        
+        <div class="row g-3">
+            <div class="col-sm-12 col-md-6 col-xl-6 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="cod_cargo" id="cod_cargo" placeholder=""  value="{{cargo.cod_cargo}}" autocomplete="off">
+                <label for="cod_cargo" class="input-label">CÓDIGO CARGO</label>
+            </div>        
+            <div class="col-sm-12 col-md-6 col-xl-6 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="desc_cargo" id="desc_cargo" placeholder=""  value="{{cargo.desc_cargo}}" autocomplete="off">
+                <label for="desc_cargo" class="input-label">DESCRIPCIÓN CARGO</label>
+            </div>
+        </div>    
+    </form>
+{% endblock %}
+{% block modalFooter %}
+    <div class="button-container">
+    {% if tienePermiso('PERSONAL_CARGOS.GUARDAR') %}
+        <button id="guardar" type="submit" form="formCargos" class="btn-guardar">GUARDAR</button>
+    {% endif %}
+
+        {% if cargo != null %}
+            {% if tienePermiso('PERSONAL_CARGOS.ELIMINAR') %}
+                <button id="eliminar" class="btn-eliminar">ELIMINAR</button>
+            {% endif %}   
+        {% endif %}   
+    </div>
+{% endblock %}

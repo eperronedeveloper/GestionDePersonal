@@ -1,0 +1,184 @@
+{% extends "embeds/extends/base.twig" %}
+{% block title %}{{title}}{% endblock %}
+{% block style %} 
+<style>
+    .text-uppercase{
+        text-transform: uppercase;
+    }
+    #crearDependencia{
+        text-align: right;
+    }
+
+    
+    .rowsTable{
+        display: inline;
+        text-align: center;
+    }
+    
+    .iconos {
+        display: flex;
+        float: right; 
+        align-items: center;
+        margin-right: 10px;   
+    }
+    
+    .iconos > img:hover {
+        cursor: pointer;
+        transition: background-color 0.5s ease;
+    }
+    
+    .btn-agregar {
+        display: inline-flex;
+        width: 100px;
+        height: 35px;
+        padding: 0.6em 0.88em;
+        background: linear-gradient(to right, green 50%, #fff 50%);
+        background-size: 200% 105.5%;
+        background-position: right bottom;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: bold;
+        color: #020202;
+        border: none;
+        border-left: 6px solid green;
+        border-color: none;
+        box-shadow: 3px 3px 2px rgb(0 0 0 / 8%);
+        transition: all .4s ease-out;
+        border-radius: 6px;
+        justify-content: center;
+    }
+
+    .btn-agregar:hover {
+      background-position: left bottom;
+      color: white;
+    }
+
+</style>
+{% endblock %} 
+
+{% block script %}
+
+    <script>
+        FADU = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+            vista.DOM = {
+                crearDependencia: document.querySelector("#crearDependencia"),
+            }
+
+            /* LISTENERS */
+            {% if tienePermiso('PERSONAL_DEPENDENCIAS.GUARDAR') %}
+            vista.DOM.crearDependencia.addEventListener('click', () => {
+                vista.FUNCION.crearDependencia();
+            });
+            {% endif %}
+            /* END LISTENERS */
+
+
+            document.addEventListener("DOMContentLoaded", function(e) {
+                tablaDependencias = $('#tablaDependencias').DataTable({
+                    buttons: ['PDF_DEPENDENCIAS', 'EXCEL_DEPENDENCIAS'],
+                    ajax: {
+                        url: "{{baseUrl}}/dependencias/listar",
+                        type: "GET",
+                        dataSrc: json => json.data.map(item => {
+                            let accionDetalle = ``;
+                            let accionEliminarDependencia = ``;
+                            let accionEditarDependencia = ``;
+                            
+                            {% if tienePermiso('PERSONAL_DEPENDENCIAS.ELIMINAR') %}
+                                accionEliminarDependencia = `onclick='FADU.FUNCION.eliminarDependencia(${item.id_dependencia})'`;
+                            {% endif %}
+
+                            {% if tienePermiso('PERSONAL_DEPENDENCIAS.DETALLE') %}
+                                accionDetalle = `title="Ver Detalle" style="cursor: pointer" onclick='FADU.FUNCION.detalleDependencia(${item.id_dependencia})'`;
+                            {% endif %}
+    
+                            return [
+                                `<div ${accionDetalle} class="rowsTable${item.id_dependencia}">
+                                ${item.desc_dependencia}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.id_dependencia}">
+                                ${item.interno}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.id_dependencia}">
+                                ${item.ubicacion}
+                                </div>`
+                            ];
+                        }),
+                    }              
+                })
+
+                initTableButtons();
+            });
+         
+
+            {% if tienePermiso('PERSONAL_DEPENDENCIAS.GUARDAR') %}
+                vista.FUNCION.crearDependencia = () => {
+                   var url = `{{baseUrl}}/dependencias/crear`;
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        cache: true,
+                        success: async response => {
+                            await abrirModal(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+            {% endif %}
+
+            {% if tienePermiso('PERSONAL_DEPENDENCIAS.DETALLE') %}
+                vista.FUNCION.detalleDependencia = (idDependencia) => {
+                   var url = "{{baseUrl}}/dependencias/detalle";
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        data: {idDependencia: idDependencia},
+                        cache: true,
+                        success: async response => {
+                            await abrirModal(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+            {% endif %}
+    }
+    </script>   
+{% endblock %}   
+
+{% block content %} 
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-5">
+        {% if tienePermiso('PERSONAL_DEPENDENCIAS.GUARDAR') %}
+            <button id="crearDependencia" class="btn-nuevo">NUEVO</button>
+        {% endif %}
+            <table id="tablaDependencias" class="table table-app">
+                <thead class="thead-app">
+                    <tr>
+                        <th>DEPENDENCIA</th>
+                        <th>INTERNO</th>
+                        <th>UBICACIÓN</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div> 
+{% endblock %}   
+
+
+

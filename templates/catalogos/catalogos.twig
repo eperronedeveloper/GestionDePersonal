@@ -1,0 +1,75 @@
+{% extends "embeds/extends/base.twig" %}
+{% block title %}{{title}}{% endblock %}
+{% block style %} 
+    <style>
+        .app-container {
+            margin: auto;
+            width: 68%;
+            padding: 10px;
+        }
+
+        p {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background-color: #c7c7c742;
+            padding: 3px 15px 3px 15px;
+            border-radius: 25px;
+        }
+    
+        a {
+            text-decoration: none
+        }
+    
+        .app-container__botonera{
+            display: grid;
+            row-gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            align-content: center;
+            -webkit-box-orient: horizontal;
+            margin: 0 auto;
+            align-items: center;
+            justify-items: center;        
+        }
+    
+    
+    
+        @media only screen and (max-width: 1490px) {
+        
+        .app__botonera {
+            width: 100%;
+            grid-column-gap: 7px;
+            }    
+    
+        }
+    </style>
+{% endblock %} 
+
+{% block script %}
+    <script>
+        FADU = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+            vista.DOM = {};
+        };
+
+    </script>   
+{% endblock %}   
+
+{% block content %} 
+    <div class="app-container">
+            <div class="app-container__botonera">
+                {% for boton in botonera %}
+                    {% if tienePermiso(boton.PERMISO) %} 
+                        <a href="{{boton.URL}}">
+                            <div id="{{boton.ID}}" class="col text-center btn-portada">                    
+                                <img src="{{boton.ICONO}}" width="44" height="44">
+                                <p>{{boton.NOMBRE}}</p>
+                            </div>                        
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+    </div>
+{% endblock %}

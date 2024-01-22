@@ -1,0 +1,240 @@
+{% extends "embeds/extends/base.twig" %}
+{% block title %}{{title}}{% endblock %}
+{% block style %} 
+<style>
+    .text-uppercase{
+        text-transform: uppercase;
+    }
+    #crearFichada{
+        text-align: right;
+    }
+
+    
+    .rowsTable{
+        display: inline;
+        text-align: center;
+    }
+    
+    .iconos {
+        display: flex;
+        float: right; 
+        align-items: center;
+        margin-right: 10px;   
+    }
+    
+    .iconos > img:hover {
+        cursor: pointer;
+        transition: background-color 0.5s ease;
+    }
+    
+    .btn-agregar {
+        display: inline-flex;
+        width: 100px;
+        height: 35px;
+        padding: 0.6em 0.88em;
+        background: linear-gradient(to right, green 50%, #fff 50%);
+        background-size: 200% 105.5%;
+        background-position: right bottom;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: bold;
+        color: #020202;
+        border: none;
+        border-left: 6px solid green;
+        border-color: none;
+        box-shadow: 3px 3px 2px rgb(0 0 0 / 8%);
+        transition: all .4s ease-out;
+        border-radius: 6px;
+        justify-content: center;
+    }
+
+    .btn-agregar:hover {
+      background-position: left bottom;
+      color: white;
+    }
+
+</style>
+{% endblock %} 
+
+{% block script %}
+
+    <script>
+        FADU = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+            vista.DOM = {
+                crearFichada: document.querySelector("#crearFichada"),
+                buscarFichadaAgente: document.querySelector("#buscarFichadaAgente"),
+            }
+
+            /* LISTENERS */
+            {% if tienePermiso('PERSONAL_FICHADAS.GUARDAR') %}
+            vista.DOM.crearFichada.addEventListener('click', () => {
+                vista.FUNCION.crearFichada();
+            });
+            vista.DOM.buscarFichadaAgente.addEventListener('click', () => {
+                vista.FUNCION.buscarFichadaAgente();
+            });
+            {% endif %}
+            /* END LISTENERS */
+
+
+            document.addEventListener("DOMContentLoaded", function(e) {
+                tablaFichadas = $('#tablaFichadas').DataTable({
+                    buttons: ['PDF_FICHADAS', 'EXCEL_FICHADAS'],
+                    columnDefs: [
+                        { orderable: false, targets: [4] },
+                    ],
+                    order: [[0, 'desc']],
+                    ajax: {
+                        url: "{{baseUrl}}/fichadas/listar",
+                        type: "GET",
+                        dataSrc: json => json.data.map(item => {
+                            let accionDetalle = ``;
+                            let accionEliminarFichada = ``;
+                            let accionEditarFichada = ``;
+    
+                            return [
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.fecha_fichada_f}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.legajo}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.hora_fichada}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.tipo_fichada == 'ENTRADA' ? '<div style="color:green"><i class="bi bi-box-arrow-in-right"></i> ENTRADA</div>' : '<div style="color:red"><i class="bi bi-box-arrow-left"></i> SALIDA</div>'}
+                                </div>`,
+                                `<div class="rowsTable${item.legajo}">
+                                    <i onclick="FADU.FUNCION.eliminar('${item.legajo}', '${item.fecha_fichada.replace(/\//g, '-')}', '${item.tipo_fichada}')" class="cestoEliminar fa fa-trash-o fa-lg"></i>
+                                </div>`
+                            ];
+                        }),
+                    }              
+                })
+
+                initTableButtons();
+            });
+         
+
+            {% if tienePermiso('PERSONAL_FICHADAS.GUARDAR') %}
+                vista.FUNCION.crearFichada = () => {
+                   var url = `{{baseUrl}}/fichadas/crear`;
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        cache: true,
+                        success: async response => {
+                            await abrirModalFull(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+
+                vista.FUNCION.buscarFichadaAgente = () => {
+                    swal({
+                        icon: 'info',
+                        text: 'BÚSQUEDA EN DESARROLLO'
+                    })
+                   //var url = `{{baseUrl}}/fichadas/crear`;
+                   // $.ajax({
+                   //     url: url,
+                   //     type: "POST",
+                   //     cache: true,
+                   //     success: async response => {
+                   //         await abrirModalFull(response);
+                   //     },
+                   //     error: function (json) {
+                   //         swal({
+                   //             icon: 'error',
+                   //             text: json.responseJSON.error
+                   //         })
+                   //     }
+                   // })
+                };
+            {% endif %}
+
+             {% if tienePermiso('PERSONAL_FICHADAS.ELIMINAR') %}
+
+            vista.FUNCION.eliminar = (legajo, fecha_fichada, tipo_fichada) => {
+
+                let fecha = fecha_fichada.replace(/\//g, '-');
+
+                let datos = {
+                    fecha_fichada: fecha,
+                    tipo_fichada: tipo_fichada                    
+                }
+
+                swal({
+                    icon: "warning",
+                    text: "ELIMINAR " + tipo_fichada + " DEL AGENTE NÚMERO " + legajo + " ?",
+                    buttons: ['CANCELAR', 'ELIMINAR'],
+                    dangerMode: true,
+                }).then((willDelete) => {
+                if (willDelete) {
+                        let url = `{{baseUrl}}/api/fichadas/${legajo}/eliminar`;
+                    $.ajax({
+                        type: 'DELETE',
+                        url: url,
+                        dataType: 'json',
+                        data: datos,
+                        success: function (json) {
+                            swal({
+                                icon: 'success',
+                                text: json.mensaje
+                            }).then( () => {
+                                recargarTabla(tablaFichadas);
+                                cerrarModal();
+                            })
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    }); 
+                }
+                })
+            };
+            
+            {% endif %}
+    }
+    </script>   
+{% endblock %}   
+
+{% block content %} 
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-5">
+        {% if tienePermiso('PERSONAL_FICHADAS.GUARDAR') %}
+            <button id="crearFichada" class="btn-nuevo">NUEVO</button>
+            <button id="buscarFichadaAgente" class="btn-buscar">BUSCAR POR AGENTE</button>
+        {% endif %}
+            <table id="tablaFichadas" class="table table-app">
+                <thead class="thead-app">
+                    <tr>
+                        <th>FECHA</th>
+                        <th>LEGAJO</th>
+                        <th>HORA</th>
+                        <th>TIPO</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div> 
+{% endblock %}   
+
+
+

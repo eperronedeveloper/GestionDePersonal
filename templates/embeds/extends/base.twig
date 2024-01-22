@@ -1,0 +1,44 @@
+{% extends "embeds/extends/main.twig" %}
+{% block htmlBody %}
+<!-- NAV BAR CON LOGOUT -->
+<nav class="navbar">
+        {% if constant('URL_PORTADA') != constant('URL_ACTUAL') and constant('URL_ACTUAL') != constant('BASEPATH') ~ '/'  %}
+                <img id="navbar__volver" onclick="goBack()" class="arrowBack" width="33px" height="33px" src="{{constant('BASEPATH')}}/public/images/arrow-left.png">
+        {% endif %}
+    <div class="container-fluid" {% if constant("URL_PORTADA") != constant("URL_ACTUAL") and constant('URL_ACTUAL') != constant('BASEPATH') ~ '/' %}style="border-left: 1px solid; border-left-color: #fff;" {% endif %}>
+        <div class="container__div">
+            <div id="navbar__titulo" class="navbar__titulo-proyecto">{{titulo_nav}}</div>
+            <div id="navbar__titulo" class="navbar__titulo">FADU PERSONAL</div>
+        </div>
+
+        <div class="dropdown">
+          <button id="dropdownNavBar" class="dropbtn" {% if constant('LOGUEADO') != true %} hidden {% endif %}>{% if constant('LOGUEADO') %}USUARIO &nbsp;{{constant('USUARIO')}} <i id="dropdownNavBar" class="fa fa-caret-down" aria-hidden="true"></i>{% endif %}</button>
+            <div id="myDropdown" class="dropdown-content">
+              <div id="dropdown__divUserData" class="div-userData">
+                <b class="text-uppercase">{{constant('USUARIO_NOMBRE')}}, {{constant('USUARIO_APELLIDO')}}</b>
+              </div>
+              <div id="dropdown__divActualizarSesion" class="navbar-a__item" onclick="actualizarSession({{constant('USUARIO')}})">ACTUALIZAR SESIÓN</div>
+              {# <div id="dropdown__divCambiarContraseña" class="navbar-a__item" onclick="cambiarContrasenia({{constant('USUARIO')}})">CAMBIAR CONTRASEÑA</div> #}
+              <div id="dropdown__divCerrarSesion" onclick="cerrarSesion({{constant('USUARIO')}})">CERRAR SESIÓN</div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- LOADER -->
+<div class="loader"></div>
+{% block content %}{% endblock %}
+
+  {% block modalContainer %}
+  <div id="modal-app" class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="modal-app" aria-hidden="true">
+    <div id="modal-app-dialog" class="modal-dialog modal-dialog-centered modal-xl">
+      <div id="modal-app-dialog-content" class="modal-content">
+        {% block modalContent %}{% endblock %}
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+
+{% endblock %}
+
+

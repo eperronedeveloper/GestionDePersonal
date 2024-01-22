@@ -1,0 +1,112 @@
+{% extends "embeds/extends/modal.twig" %}
+{% block style %}{% endblock %}
+{% block script %}
+    <script>
+    FADU.modal = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+    vista.tipoAntiguedad = {{tipoAntiguedad ? (tipoAntiguedad | json_encode | raw) : 'null' }};
+    
+    vista.DOM = {
+        desc_tipo_ant: document.querySelector("#desc_tipo_ant"),
+        guardar: document.querySelector('#guardar'),
+        eliminar: document.querySelector('#eliminar'),
+        form: document.querySelector("#formTipoAntiguedad")
+    };
+    
+   {% if tipoAntiguedad != null %}
+        {% if tienePermiso('PERSONAL_TIPOANTIGUEDAD.ELIMINAR') %}
+            vista.DOM.eliminar.addEventListener('click', (event) => {
+                vista.FUNCION.eliminar(vista.tipoAntiguedad.id_tipo_ant);
+            });
+        {% endif %}
+    {% endif %}            
+
+    {% if tienePermiso('PERSONAL_TIPOANTIGUEDAD.GUARDAR') %}
+        vista.FUNCION.guardar = (event) => {
+            event.preventDefault();
+            vista.DOM.guardar.disabled = true;
+            let formData = new FormData(vista.DOM.form);
+
+            let datos = {
+                desc_tipo_ant: formData.get('desc_tipo_ant'),
+            };
+            
+            let url = vista.tipoAntiguedad ? `{{baseUrl}}/api/tipoAntiguedad/${vista.tipoAntiguedad.id_tipo_ant}/editar` : `{{baseUrl}}/api/tipoAntiguedad/crear`;
+                $.ajax({
+                    type: (vista.tipoAntiguedad) ? 'PUT' : 'POST',
+                    url: url,
+                    dataType: 'json',
+                    data: datos,
+                    success: json => { swal({ icon: 'success', text: json.mensaje })
+                        .then( () => { recargarTabla(tablaTipoAntiguedad); cerrarModal(); })
+                    },
+                    error: json => { swal({icon: 'error', text: json.responseJSON.error })
+                        vista.DOM.guardar.disabled = false;
+                    },
+                });
+            };
+    {% endif %}
+
+    {% if tienePermiso('PERSONAL_TIPOANTIGUEDAD.ELIMINAR') %}
+    vista.FUNCION.eliminar = (idTipoAntiguedad) => {
+                swal({
+                    icon: "warning",
+                    text: "ESTA SEGURO QUE DESEA ELIMINAR EL TIPO DE ANTIGUEDAD?",
+                    buttons: ['CANCELAR', 'ELIMINAR'],
+                    dangerMode: true,
+                }).then((willDelete) => {
+                if (willDelete) {
+                        let url = `{{baseUrl}}/api/tipoAntiguedad/${idTipoAntiguedad}/eliminar`;
+                    $.ajax({
+                        type: 'DELETE',
+                        url: url,
+                        dataType: 'json',
+                        success: function (json) {
+                        swal({
+                            icon: 'success',
+                            text: json.mensaje
+                        }).then( () => {
+                            recargarTabla(tablaTipoAntiguedad);
+                            cerrarModal();
+                        })
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    }); 
+                }
+                })
+            };
+    {% endif %}
+    }
+
+    </script>
+{% endblock %}
+{% block modalBody %}    
+    <form id="formTipoAntiguedad" onsubmit="FADU.modal.FUNCION.guardar(event)">        
+        <div class="row g-3">
+            <div class="col-sm-12 col-md-12 col-xl-12 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="desc_tipo_ant" id="desc_tipo_ant" placeholder=""  value="{{tipoAntiguedad.desc_tipo_ant}}" autocomplete="off">
+                <label for="desc_tipo_ant" class="input-label">DESCRIPCIÓN DEL TIPO DE ANTIGUEDAD</label>
+            </div>   
+        </div>    
+    </form>
+{% endblock %}
+{% block modalFooter %}
+    <div class="button-container">
+    {% if tienePermiso('PERSONAL_TIPOANTIGUEDAD.GUARDAR') %}
+        <button id="guardar" type="submit" form="formTipoAntiguedad" class="btn-guardar">GUARDAR</button>
+    {% endif %}
+
+        {% if tipoAntiguedad != null %}
+            {% if tienePermiso('PERSONAL_TIPOANTIGUEDAD.ELIMINAR') %}
+                <button id="eliminar" class="btn-eliminar">ELIMINAR</button>
+            {% endif %}   
+        {% endif %}   
+    </div>
+{% endblock %}

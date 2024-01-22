@@ -1,0 +1,124 @@
+{% extends "embeds/extends/modal.twig" %}
+{% block style %}{% endblock %}
+{% block script %}
+    <script>
+    FADU.modal = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+    vista.dependencia = {{dependencia ? (dependencia | json_encode | raw) : 'null' }};
+    
+    vista.DOM = {
+        descripcion: document.querySelector("#descripcion"),
+        interno: document.querySelector("#interno"),
+        ubicacion: document.querySelector("#ubicacion"),
+        guardar: document.querySelector('#guardar'),
+        eliminar: document.querySelector('#eliminar'),
+        form: document.querySelector("#formDependencias")
+    };
+    
+   {% if dependencia != null %}
+        {% if tienePermiso('PERSONAL_DEPENDENCIAS.ELIMINAR') %}
+            vista.DOM.eliminar.addEventListener('click', (event) => {
+                vista.FUNCION.eliminar(vista.dependencia.id_dependencia);
+            });
+        {% endif %}
+    {% endif %}            
+
+    {% if tienePermiso('PERSONAL_DEPENDENCIAS.GUARDAR') %}
+        vista.FUNCION.guardar = (event) => {
+            event.preventDefault();
+            vista.DOM.guardar.disabled = true;
+            let formData = new FormData(vista.DOM.form);
+
+            let datos = {
+                descripcion: formData.get('descripcion'),
+                interno: formData.get('interno'),
+                ubicacion: formData.get('ubicacion')
+            };
+            
+            let url = vista.dependencia ? `{{baseUrl}}/api/dependencias/${vista.dependencia.id_dependencia}/editar` : `{{baseUrl}}/api/dependencias/crear`;
+                $.ajax({
+                    type: (vista.dependencia) ? 'PUT' : 'POST',
+                    url: url,
+                    dataType: 'json',
+                    data: datos,
+                    success: json => { swal({ icon: 'success', text: json.mensaje })
+                        .then( () => { recargarTabla(tablaDependencias); cerrarModal(); })
+                    },
+                    error: json => { swal({icon: 'error', text: json.responseJSON.error })
+                        vista.DOM.guardar.disabled = false;
+                    },
+                });
+            };
+    {% endif %}
+
+    {% if tienePermiso('PERSONAL_DEPENDENCIAS.ELIMINAR') %}
+    vista.FUNCION.eliminar = (idDependencia) => {
+                swal({
+                    icon: "warning",
+                    text: "ESTA SEGURO QUE DESEA ELIMINAR LA DEPENDENCIA?",
+                    buttons: ['CANCELAR', 'ELIMINAR'],
+                    dangerMode: true,
+                }).then((willDelete) => {
+                if (willDelete) {
+                        let url = `{{baseUrl}}/api/dependencias/${idDependencia}/eliminar`;
+                    $.ajax({
+                        type: 'DELETE',
+                        url: url,
+                        dataType: 'json',
+                        success: function (json) {
+                        swal({
+                            icon: 'success',
+                            text: json.mensaje
+                        }).then( () => {
+                            recargarTabla(tablaDependencias);
+                            cerrarModal();
+                        })
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    }); 
+                }
+                })
+            };
+    {% endif %}
+    }
+
+    </script>
+{% endblock %}
+{% block modalBody %}    
+    <form id="formDependencias" onsubmit="FADU.modal.FUNCION.guardar(event)">        
+        <div class="row g-3">
+            <div class="col-sm-12 col-md-4 col-xl-4 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="descripcion" id="descripcion" placeholder=""  value="{{dependencia.desc_dependencia}}" autocomplete="off">
+                <label for="descripcion" class="input-label">DESCRIPCIÓN</label>
+            </div>        
+            <div class="col-sm-12 col-md-4 col-xl-4 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="interno" id="interno" placeholder=""  value="{{dependencia.interno}}" autocomplete="off">
+                <label for="interno" class="input-label">INTERNO</label>
+            </div>
+            <div class="col-sm-12 col-md-4 col-xl-4 form-floating mb-4">
+                <input type="text" class="form-control text-uppercase" name="ubicacion" id="ubicacion" placeholder=""  value="{{dependencia.ubicacion}}" autocomplete="off">
+                <label for="ubicacion" class="input-label">UBICACIÓN</label>
+            </div>
+        </div>    
+    </form>
+{% endblock %}
+{% block modalFooter %}
+    <div class="button-container">
+    {% if tienePermiso('PERSONAL_DEPENDENCIAS.GUARDAR') %}
+        <button id="guardar" type="submit" form="formDependencias" class="btn-guardar">GUARDAR</button>
+    {% endif %}
+
+        {% if dependencia != null %}
+            {% if tienePermiso('PERSONAL_DEPENDENCIAS.ELIMINAR') %}
+                <button id="eliminar" class="btn-eliminar">ELIMINAR</button>
+            {% endif %}   
+        {% endif %}   
+    </div>
+{% endblock %}

@@ -1,0 +1,8 @@
+log/app.log
+uploads/
+public/js/app.js
+public/js/dataTable.js
+vendor/
+application/Settings.php
+application/ContainerSevicios.php
+application/Middleware.php

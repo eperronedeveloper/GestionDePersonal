@@ -1,0 +1,246 @@
+{% extends "embeds/extends/base.twig" %}
+{% block title %}{{title}}{% endblock %}
+{% block style %} 
+<style>
+    .text-uppercase{
+        text-transform: uppercase;
+    }
+    #crearAgente{
+        text-align: right;
+    }
+
+    
+    .rowsTable{
+        display: inline;
+        text-align: center;
+    }
+    
+    .iconos {
+        display: flex;
+        float: right; 
+        align-items: center;
+        margin-right: 10px;   
+    }
+    
+    .iconos > img:hover {
+        cursor: pointer;
+        transition: background-color 0.5s ease;
+    }
+    
+    .btn-agregar {
+        display: inline-flex;
+        width: 100px;
+        height: 35px;
+        padding: 0.6em 0.88em;
+        background: linear-gradient(to right, green 50%, #fff 50%);
+        background-size: 200% 105.5%;
+        background-position: right bottom;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: bold;
+        color: #020202;
+        border: none;
+        border-left: 6px solid green;
+        border-color: none;
+        box-shadow: 3px 3px 2px rgb(0 0 0 / 8%);
+        transition: all .4s ease-out;
+        border-radius: 6px;
+        justify-content: center;
+    }
+
+    .btn-agregar:hover {
+      background-position: left bottom;
+      color: white;
+    }
+
+    .img-agente{
+        width: 75px;
+        height: 75px;
+        border: 2px solid #c5cde0;;
+        border-radius: 100%;
+    }
+
+    .cestoEliminar{
+        font-size: 1.4rem;
+    }
+
+</style>
+{% endblock %} 
+
+{% block script %}
+
+    <script>
+        FADU = new function () {
+            const vista = this;
+            vista.FUNCION = {};
+
+            vista.DOM = {
+                crearAgente: document.querySelector("#crearAgente"),
+            }
+
+            /* LISTENERS */
+            {% if tienePermiso('PERSONAL_AGENTES.GUARDAR') %}
+            vista.DOM.crearAgente.addEventListener('click', () => {
+                vista.FUNCION.crearAgente();
+            });
+            {% endif %}
+            /* END LISTENERS */
+
+
+            document.addEventListener("DOMContentLoaded", function(e) {
+                tablaAgentes = $('#tablaAgentes').DataTable({
+                    buttons: ['PDF_AGENTES', 'EXCEL_AGENTES'],
+                    order:  [ 2, "asc" ],
+                    columnDefs: [
+                        { orderable: false, targets: [0, 6] },
+                    ],
+                    ajax: {
+                        url: "{{baseUrl}}/agentes/listar",
+                        type: "GET",
+                        dataSrc: json => json.data.map(item => {
+                            let accionDetalle = ``;
+                            let accionEditarAgente = ``;
+
+                            {% if tienePermiso('PERSONAL_AGENTES.DETALLE') %}
+                                accionDetalle = `title="Ver Detalle" style="cursor: pointer" onclick='FADU.FUNCION.detalleAgente(${item.legajo})'`;
+                            {% endif %}
+    
+                            return [
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                    <img src="{{baseUrl}}/uploads/fotoAgentes/${item.foto_agente}" class="img-agente">
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.legajo}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.nombre_agente}, ${item.apellido_agente}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.dni_agente} / ${item.cuil_agente}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.telefono}
+                                </div>`,
+                                `<div ${accionDetalle} class="rowsTable${item.legajo}">
+                                ${item.email}
+                                </div>`,
+                                `<div class="rowsTable${item.legajo}">
+                                    <i onclick=FADU.FUNCION.eliminar(${item.legajo}) class="cestoEliminar fa fa-trash-o fa-lg"></i>
+                                </div>`
+                            ];
+                        }),
+                    }              
+                })
+                initTableButtons();
+            });
+         
+
+            {% if tienePermiso('PERSONAL_AGENTES.GUARDAR') %}
+                vista.FUNCION.crearAgente = () => {
+                   var url = `{{baseUrl}}/agentes/crear`;
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        cache: true,
+                        success: async response => {
+                            await abrirModalFull(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+            {% endif %}
+
+            {% if tienePermiso('PERSONAL_AGENTES.DETALLE') %}
+                vista.FUNCION.detalleAgente = (legajo) => {
+                   var url = "{{baseUrl}}/agentes/detalle";
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        data: {legajo: legajo},
+                        cache: true,
+                        success: async response => {
+                            await abrirModalFull(response);
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    })
+                };
+            {% endif %}
+
+            {% if tienePermiso('PERSONAL_AGENTES.ELIMINAR') %}
+
+            vista.FUNCION.eliminar = (legajo) => {
+                swal({
+                    icon: "warning",
+                    text: "ELIMINAR AGENTE LEGAJO NÚMERO " + legajo + "?",
+                    buttons: ['CANCELAR', 'ELIMINAR'],
+                    dangerMode: true,
+                }).then((willDelete) => {
+                if (willDelete) {
+                        let url = `{{baseUrl}}/api/agentes/${legajo}/eliminar`;
+                    $.ajax({
+                        type: 'DELETE',
+                        url: url,
+                        dataType: 'json',
+                        success: function (json) {
+                        swal({
+                            icon: 'success',
+                            text: json.mensaje
+                        }).then( () => {
+                            recargarTabla(tablaAgentes);
+                            cerrarModal();
+                        })
+                        },
+                        error: function (json) {
+                            swal({
+                                icon: 'error',
+                                text: json.responseJSON.error
+                            })
+                        }
+                    }); 
+                }
+                })
+            };
+            
+            {% endif %}
+    }
+    </script>   
+{% endblock %}   
+
+{% block content %} 
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-5">
+        {% if tienePermiso('PERSONAL_AGENTES.GUARDAR') %}
+            <button id="crearAgente" class="btn-nuevo">NUEVO</button>
+        {% endif %}
+            <table id="tablaAgentes" class="table table-app">
+                <thead class="thead-app">
+                    <tr>
+                        <th>FOTO</th>
+                        <th>LEGAJO</th>
+                        <th>NOMBRE Y APELLIDO</th>
+                        <th>DNI / CUIL</th>
+                        <th>TELÉFONO</th>
+                        <th>EMAIL</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div> 
+{% endblock %}   
+
+
+
